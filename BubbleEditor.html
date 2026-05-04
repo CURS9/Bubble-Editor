@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawing & Text Editor Pro - Dark Mode</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Oswald:wght@400;700&family=Pacifico&display=swap" rel="stylesheet">
+
+    <style>
+        /* PASTE YOUR LOCAL FONTS HERE */
+        @font-face {
+            font-family: 'Wild';
+            src: url('wild.ttf') format('truetype'); 
+            font-weight: normal;
+            font-style: normal;
+        }
+        
+        /* =================================================================
+           OBSIDIAN BLACK OPS INSPIRED INTERFACE (DARK MODE)
+           ================================================================= */
+        body { 
+            font-family: 'Inter', -apple-system, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            background-color: #000000; 
+            background-image: radial-gradient(circle at 50% 0%, rgba(30, 30, 30, 1) 0%, transparent 70%);
+            margin: 0; 
+            padding: 20px; 
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .toolbar { 
+            background-color: #050505; 
+            border: 1px solid #222; 
+            padding: 15px 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05); 
+            display: flex; 
+            gap: 25px; 
+            align-items: flex-end; 
+            margin-bottom: 20px; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            max-width: 1000px;
+        }
+
+        .tool-group { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 8px; 
+            font-size: 13px; 
+            font-weight: 600;
+            color: #888;
+            letter-spacing: 0.5px;
+        }
+
+        .tool-group > div { display: flex; gap: 8px; }
+
+        .tool-btn {
+            background-color: #111; 
+            color: #888;
+            border: 1px solid #333;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 0;
+        }
+
+        .tool-btn:hover { 
+            background-color: #222; 
+            color: #fff;
+            transform: scale(1.05);
+            border-color: #555;
+        }
+
+        .active-tool { 
+            background-color: #0a0a0a !important; 
+            color: #ffffff !important; 
+            border-color: #ffffff !important;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2), inset 0 0 8px rgba(255, 255, 255, 0.1) !important;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+            transform: scale(1.05);
+        }
+
+        select, input[type="file"], input[type="color"] { 
+            padding: 8px; 
+            border: 1px solid #333; 
+            border-radius: 6px; 
+            outline: none; 
+            background: #111;
+            color: #fff;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        select:hover, input[type="file"]:hover { border-color: #555; }
+        input[type="color"] { padding: 2px; height: 35px; width: 45px; }
+        input[type="range"] { cursor: pointer; }
+
+        button { cursor: pointer; transition: all 0.2s ease; }
+        #undoBtn, #clearBtn, #downloadBtn { 
+            background-color: #111; 
+            color: #ccc; 
+            border: 1px solid #333; 
+            border-radius: 6px; 
+            padding: 10px 15px;
+            font-weight: 600;
+        }
+
+        #undoBtn:hover { background-color: #1a0f2e; color: #fff; border-color: #8e44ad; box-shadow: 0 0 10px rgba(142, 68, 173, 0.3); }
+        #clearBtn:hover { background-color: #2e0f0f; color: #fff; border-color: #e74c3c; box-shadow: 0 0 10px rgba(231, 76, 60, 0.3); }
+        #downloadBtn:hover { background-color: #0f2e16; color: #fff; border-color: #27ae60; box-shadow: 0 0 10px rgba(39, 174, 96, 0.3); }
+
+        .canvas-container {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+            padding: 10px;
+        }
+        
+        .canvas-wrapper {
+            position: relative;
+            display: inline-block;
+            border: 1px solid #333; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.8), 0 0 30px rgba(255,255,255,0.02); 
+            border-radius: 8px; 
+            background: #ffffff;
+            line-height: 0;
+            user-select: none; 
+            touch-action: none; 
+        }
+        
+        canvas { 
+            display: block; 
+            max-width: 100%; 
+            height: auto;
+        }
+
+        /* MULTI-SELECTION BOX */
+        .selection-box {
+            position: absolute;
+            border: 1px dashed #00d2ff;
+            background-color: rgba(0, 210, 255, 0.15);
+            z-index: 999;
+            pointer-events: none; 
+            display: none;
+        }
+
+        .text-element {
+            position: absolute;
+            transform: translate(-50%, -50%); 
+            padding: 10px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            min-height: 40px;
+        }
+        
+        .text-element.locked {
+            z-index: 1000;
+            border: 2px solid transparent; 
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .text-element.locked .resize-handle {
+            display: none; 
+        }
+
+        /* MULTI-SELECTED ELEMENTS APPEARANCE */
+        .text-element.multi-selected {
+            z-index: 1001;
+            border: 2px dashed #8e44ad;
+            background-color: rgba(142, 68, 173, 0.1);
+            cursor: move;
+        }
+
+        .text-element.editing {
+            z-index: 1002; 
+            border: 2px solid #00d2ff; 
+            background-color: rgba(0, 210, 255, 0.05);
+            cursor: move; 
+        }
+        
+        .text-element span {
+            display: block;
+            width: 100%;
+            white-space: pre-wrap; 
+            word-break: break-word; 
+            text-align: center; 
+            outline: none;
+            border: none;
+            background: transparent;
+            line-height: 1.2; 
+            cursor: default;
+        }
+
+        .text-element span[contenteditable="true"] { cursor: text; }
+
+        .resize-handle {
+            position: absolute;
+            background-color: #fff;
+            border: 2px solid #00d2ff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+        .resize-handle.se, .resize-handle.sw, .resize-handle.ne, .resize-handle.nw { width: 12px; height: 12px; border-radius: 50%; }
+        .resize-handle.e, .resize-handle.w { width: 6px; height: 16px; border-radius: 3px; top: 50%; transform: translateY(-50%); }
+        
+        .resize-handle.se { right: -7px; bottom: -7px; cursor: nwse-resize; }
+        .resize-handle.nw { left: -7px; top: -7px; cursor: nwse-resize; }
+        .resize-handle.ne { right: -7px; top: -7px; cursor: nesw-resize; }
+        .resize-handle.sw { left: -7px; bottom: -7px; cursor: nesw-resize; }
+        .resize-handle.e { right: -4px; cursor: ew-resize; }
+        .resize-handle.w { left: -4px; cursor: ew-resize; }
+        
+        
+    </style>
+</head>
+<body>
+
+    <div class="toolbar">
+        <div class="tool-group">
+            <label>Tool</label>
+            <div class="icon-tools">
+                <button id="pointerBtn" class="tool-btn" title="Select (V)">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>
+                </button>
+                <button id="brushBtn" class="tool-btn active-tool" title="Brush (B)">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/><path d="M9 11l4 4"/><path d="M5 19h4v-4H5v4z"/></svg>
+                </button>
+                <button id="textBtn" class="tool-btn" title="Text (T)">
+                    <span style="font-family: 'Times New Roman', Georgia, serif; font-size: 24px; font-weight: bold; font-style: italic; line-height: 1;">T</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="tool-group">
+            <label for="colorPicker">Color</label>
+            <input type="color" id="colorPicker" value="#000000">
+        </div>
+
+        <div class="tool-group">
+            <label for="brushSize">Size</label>
+            <input type="range" id="brushSize" min="1" max="50" value="5">
+        </div>
+
+        <div class="tool-group">
+            <label for="fontSelector">Font</label>
+            <select id="fontSelector">
+                <option value="'Wild', sans-serif" data-weight="normal">Wild</option>
+                <option value="'Bangers', cursive" data-weight="normal">Bangers (Comic)</option>
+                <option value="'Pacifico', cursive" data-weight="normal">Pacifico (Handwriting)</option>
+                <option value="'Oswald', sans-serif" data-weight="normal">Oswald</option>
+                <option value="'Times New Roman', Times, serif" data-weight="normal">Times New Roman</option>
+                <option value="sans-serif" data-weight="normal">Standard Sans-Serif</option>
+            </select>
+        </div>
+
+        <div class="tool-group" id="strokeGroup" style="display: none; align-items: center; flex-direction: row; gap: 10px; padding-bottom: 5px;">
+            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: #fff;">
+                <input type="checkbox" id="strokeToggle" style="width: 18px; height: 18px;"> Outline
+            </label>
+            <input type="color" id="strokeColorPicker" value="#ffffff" style="display: none;" title="Outline Color">
+        </div>
+
+        <div class="tool-group">
+            <label for="imageLoader">Load Image</label>
+            <input type="file" id="imageLoader" accept="image/*" style="width: 150px;">
+        </div>
+        
+        <div class="tool-group">
+            <label>Actions</label>
+            <div>
+                <button id="undoBtn" title="Ctrl + Z">Undo</button>
+                <button id="clearBtn">Clear</button>
+                <button id="downloadBtn">Download</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="canvas-container">
+        <div class="canvas-wrapper">
+            <div id="selectionBox" class="selection-box"></div>
+            <canvas id="drawingCanvas" width="900" height="500"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const wrapper = document.querySelector('.canvas-wrapper');
+        const selectionBoxDOM = document.getElementById('selectionBox');
+        
+        const colorPicker = document.getElementById('colorPicker');
+        const brushSize = document.getElementById('brushSize');
+        const fontSelector = document.getElementById('fontSelector');
+        
+        const strokeToggle = document.getElementById('strokeToggle');
+        const strokeColorPicker = document.getElementById('strokeColorPicker');
+
+        const imageLoader = document.getElementById('imageLoader');
+        const clearBtn = document.getElementById('clearBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const pointerBtn = document.getElementById('pointerBtn');
+        const brushBtn = document.getElementById('brushBtn');
+        const textBtn = document.getElementById('textBtn');
+        const undoBtn = document.getElementById('undoBtn');
+
+        let isDrawing = false;
+        let currentTool = 'brush'; 
+        let activeEditingNode = null; 
+
+        let selectedNodes = new Set(); 
+        let isSelecting = false; 
+        let selStartX = 0, selStartY = 0; 
+        let groupDragData = []; 
+
+        let originalImage = null; 
+        let imgScaleRatio = 1;    
+        let strokes = [];         
+        let currentStroke = null; 
+
+        let undoStack = [];
+        let isUndoing = false;
+        let saveTimeout;
+        let clipboardData = null; 
+
+        function queueSaveState() {
+            if (isUndoing) return;
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(saveState, 50); 
+        }
+
+        function saveState() {
+            if (isUndoing) return;
+            const texts = [];
+            document.querySelectorAll('.text-element').forEach(node => {
+                const span = node.querySelector('span');
+                texts.push({
+                    left: node.style.left,
+                    top: node.style.top,
+                    width: node.style.width,
+                    height: node.style.height,
+                    html: span.innerHTML, // NEW: save HTML to preserve line breaks
+                    text: span.innerText, 
+                    color: span.style.color,
+                    fontFamily: span.style.fontFamily,
+                    fontWeight: span.style.fontWeight,
+                    fontSize: span.style.fontSize,
+                    fontValue: span.dataset.fontValue,
+                    isEditing: node.classList.contains('editing'),
+                    hasStroke: span.dataset.hasStroke === 'true',
+                    strokeColor: span.dataset.strokeColor || '#ffffff'
+                });
+            });
+
+            undoStack.push({
+                strokes: JSON.parse(JSON.stringify(strokes)), 
+                width: canvas.width,
+                height: canvas.height,
+                texts: texts
+            });
+
+            if (undoStack.length > 50) undoStack.shift();
+        }
+
+        function undo() {
+            if (undoStack.length <= 1) return; 
+            isUndoing = true;
+            undoStack.pop(); 
+            const prevState = undoStack[undoStack.length - 1]; 
+            
+            strokes = JSON.parse(JSON.stringify(prevState.strokes));
+            redrawCanvas();
+
+            document.querySelectorAll('.text-element').forEach(node => node.remove());
+            activeEditingNode = null;
+            clearMultiSelection(); 
+            
+            prevState.texts.forEach(tData => {
+                createTextObject(0, 0, tData);
+            });
+
+            isUndoing = false;
+            updateCursor();
+        }
+
+        function clearMultiSelection() {
+            selectedNodes.forEach(node => node.classList.remove('multi-selected'));
+            selectedNodes.clear();
+            groupDragData = [];
+        }
+
+        window.addEventListener('keydown', (e) => {
+            const isTyping = document.activeElement.isContentEditable || document.activeElement.tagName === 'INPUT';
+
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+                if (!isTyping) { e.preventDefault(); undo(); }
+            }
+
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+                if (activeEditingNode && !isTyping) {
+                    e.preventDefault();
+                    const span = activeEditingNode.querySelector('span');
+                    clipboardData = {
+                        html: span.innerHTML,
+                        text: span.innerText,
+                        color: span.style.color,
+                        fontFamily: span.style.fontFamily,
+                        fontWeight: span.style.fontWeight,
+                        fontSize: span.style.fontSize,
+                        fontValue: span.dataset.fontValue,
+                        width: activeEditingNode.style.width || activeEditingNode.offsetWidth + 'px',
+                        height: activeEditingNode.style.height || activeEditingNode.offsetHeight + 'px',
+                        hasStroke: span.dataset.hasStroke === 'true',
+                        strokeColor: span.dataset.strokeColor || '#ffffff'
+                    };
+                    if (navigator.clipboard) navigator.clipboard.writeText(span.innerText).catch(() => {});
+                }
+            }
+
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+                if (!isTyping && clipboardData) {
+                    e.preventDefault();
+                    lockAllTexts(); 
+                    const dropX = (wrapper.offsetWidth / 2) + (Math.random() * 40 - 20); 
+                    const dropY = (wrapper.offsetHeight / 2) + (Math.random() * 40 - 20);
+                    createTextObject(dropX, dropY, { ...clipboardData, left: dropX + 'px', top: dropY + 'px', isEditing: true });
+                    queueSaveState();
+                }
+            }
+
+            if ((e.key === 'Delete' || e.key === 'Backspace') && !isTyping) {
+                if (selectedNodes.size > 0) {
+                    e.preventDefault();
+                    selectedNodes.forEach(node => node.remove());
+                    selectedNodes.clear();
+                    queueSaveState();
+                } else if (activeEditingNode) {
+                    e.preventDefault();
+                    activeEditingNode.remove();
+                    activeEditingNode = null;
+                    queueSaveState();
+                }
+            }
+        });
+        
+        undoBtn.addEventListener('click', undo);
+
+        function fillWhiteBackground() {
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function redrawCanvas() {
+            if (originalImage) {
+                ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
+            } else {
+                fillWhiteBackground();
+            }
+
+            strokes.forEach(stroke => {
+                if (stroke.points.length < 1) return;
+                ctx.beginPath();
+                ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+                for (let i = 1; i < stroke.points.length; i++) {
+                    ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+                }
+                ctx.strokeStyle = stroke.color;
+                ctx.lineWidth = stroke.size;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+            });
+        }
+        
+        fillWhiteBackground();
+        saveState();
+
+        function switchTool(tool) {
+            if (currentTool === tool) return; 
+            currentTool = tool;
+            pointerBtn.classList.remove('active-tool');
+            brushBtn.classList.remove('active-tool');
+            textBtn.classList.remove('active-tool');
+            colorPicker.value = '#000000';
+            
+            const strokeGroup = document.getElementById('strokeGroup');
+            strokeGroup.style.display = (tool === 'text' || tool === 'pointer') ? 'flex' : 'none';
+            
+            if (tool === 'pointer') pointerBtn.classList.add('active-tool');
+            if (tool === 'brush') { brushBtn.classList.add('active-tool'); brushSize.value = 5; }
+            if (tool === 'text') { textBtn.classList.add('active-tool'); brushSize.value = 5; strokeGroup.style.display = 'flex'; }
+            
+            updateCursor();
+        }
+
+        pointerBtn.addEventListener('click', () => { lockAllTexts(); switchTool('pointer'); });
+        brushBtn.addEventListener('click', () => { lockAllTexts(); switchTool('brush'); });
+        textBtn.addEventListener('click', () => { lockAllTexts(); switchTool('text'); });
+
+        strokeToggle.addEventListener('change', () => {
+            strokeColorPicker.style.display = strokeToggle.checked ? 'block' : 'none';
+            applyStrokeToSelection();
+        });
+
+        strokeColorPicker.addEventListener('input', () => {
+            applyStrokeToSelection();
+        });
+
+        function applyStrokeToSelection() {
+            const hasStroke = strokeToggle.checked;
+            const color = strokeColorPicker.value;
+            const w = '0.04em';
+            const strokeCss = hasStroke ? `-${w} -${w} 0 ${color}, 0 -${w} 0 ${color}, ${w} -${w} 0 ${color}, ${w} 0 0 ${color}, ${w} ${w} 0 ${color}, 0 ${w} 0 ${color}, -${w} ${w} 0 ${color}, -${w} 0 0 ${color}` : '';
+
+            if (activeEditingNode) {
+                const span = activeEditingNode.querySelector('span');
+                span.style.textShadow = strokeCss;
+                span.dataset.hasStroke = hasStroke;
+                span.dataset.strokeColor = color;
+                queueSaveState();
+            } else if (selectedNodes.size > 0) {
+                selectedNodes.forEach(node => {
+                    const span = node.querySelector('span');
+                    span.style.textShadow = strokeCss;
+                    span.dataset.hasStroke = hasStroke;
+                    span.dataset.strokeColor = color;
+                });
+                queueSaveState();
+            }
+        }
+
+        function updateCursor() {
+            if (currentTool === 'text') { canvas.style.cursor = 'text'; return; }
+            if (currentTool === 'pointer') { canvas.style.cursor = 'default'; return; }
+
+            const rect = canvas.getBoundingClientRect();
+            let scale = 1;
+            if (rect.width > 0) scale = rect.width / canvas.width;
+
+            const baseSize = parseInt(brushSize.value);
+            const visualSize = Math.max(baseSize * scale, 4); 
+            const half = visualSize / 2;
+            const r1 = Math.max(half - 0.5, 0.1);
+            const r2 = Math.max(half - 1.5, 0.1);
+
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${visualSize}" height="${visualSize}">
+                <circle cx="${half}" cy="${half}" r="${r1}" fill="none" stroke="black" stroke-width="1"/>
+                <circle cx="${half}" cy="${half}" r="${r2}" fill="none" stroke="white" stroke-width="1"/>
+            </svg>`;
+            
+            const cursorUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+            canvas.style.cursor = `url(${cursorUrl}) ${half} ${half}, crosshair`;
+        }
+
+        window.addEventListener('resize', updateCursor);
+        
+        brushSize.addEventListener('input', () => {
+            if (activeEditingNode) {
+                const span = activeEditingNode.querySelector('span');
+                const newSize = parseInt(brushSize.value) * 4;
+                span.style.fontSize = newSize + 'px';
+            } else if (selectedNodes.size > 0) {
+                const newSize = parseInt(brushSize.value) * 4;
+                selectedNodes.forEach(node => {
+                    node.querySelector('span').style.fontSize = newSize + 'px';
+                });
+            }
+            updateCursor();
+        });
+        brushSize.addEventListener('change', () => {
+            if (activeEditingNode || selectedNodes.size > 0) queueSaveState();
+        });
+
+        updateCursor(); 
+
+        function lockAllTexts() {
+            document.querySelectorAll('.text-element.editing').forEach(node => node.lock());
+            activeEditingNode = null;
+            clearMultiSelection(); 
+        }
+
+        function handleCanvasDown(clientX, clientY) {
+            lockAllTexts(); 
+            if (currentTool === 'pointer') {
+                isSelecting = true;
+                const rect = wrapper.getBoundingClientRect();
+                selStartX = clientX - rect.left;
+                selStartY = clientY - rect.top;
+
+                selectionBoxDOM.style.left = selStartX + 'px';
+                selectionBoxDOM.style.top = selStartY + 'px';
+                selectionBoxDOM.style.width = '0px';
+                selectionBoxDOM.style.height = '0px';
+                selectionBoxDOM.style.display = 'block';
+                return;
+            }
+            if (currentTool === 'text') {
+                const rect = wrapper.getBoundingClientRect();
+                createTextObject(clientX - rect.left, clientY - rect.top);
+                return;
+            } 
+            if (currentTool === 'brush') {
+                isDrawing = true;
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;   
+                const scaleY = canvas.height / rect.height; 
+                const px = (clientX - rect.left) * scaleX;
+                const py = (clientY - rect.top) * scaleY;
+                
+                currentStroke = { color: colorPicker.value, size: brushSize.value, points: [{x: px, y: py}] };
+                strokes.push(currentStroke);
+                ctx.beginPath();
+                ctx.moveTo(px, py);
+            }
+        }
+
+        canvas.addEventListener('mousedown', (e) => handleCanvasDown(e.clientX, e.clientY));
+        canvas.addEventListener('touchstart', (e) => { 
+            e.preventDefault(); 
+            handleCanvasDown(e.touches[0].clientX, e.touches[0].clientY); 
+        }, { passive: false });
+
+        let dragNode = null;
+        let resizeNode = null;
+        let resizeDir = null;
+        let dragStartX, dragStartY, initialLeft, initialTop, initialWidth, initialHeight, initialFontSize;
+
+        function handleGlobalMove(clientX, clientY) {
+            if (isSelecting) {
+
+                const rect = wrapper.getBoundingClientRect();
+                const currentX = clientX - rect.left;
+                const currentY = clientY - rect.top;
+                const left = Math.min(selStartX, currentX);
+                const top = Math.min(selStartY, currentY);
+                selectionBoxDOM.style.left = left + 'px';
+                selectionBoxDOM.style.top = top + 'px';
+                selectionBoxDOM.style.width = Math.abs(currentX - selStartX) + 'px';
+                selectionBoxDOM.style.height = Math.abs(currentY - selStartY) + 'px';
+            }
+            else if (dragNode) {
+                const dx = clientX - dragStartX;
+                const dy = clientY - dragStartY;
+
+                if (selectedNodes.size > 0 && selectedNodes.has(dragNode)) {
+                    groupDragData.forEach(item => {
+                        item.node.style.left = (item.initialLeft + dx) + 'px';
+                        item.node.style.top = (item.initialTop + dy) + 'px';
+                    });
+                } else {
+                    dragNode.style.left = (initialLeft + dx) + 'px';
+                    dragNode.style.top = (initialTop + dy) + 'px';
+                }
+            } 
+            else if (resizeNode) {
+                const dx = clientX - dragStartX;
+                const dy = clientY - dragStartY;
+                let newWidth = initialWidth, newHeight = initialHeight, diffX = 0, diffY = 0, scale = 1;
+                const isCorner = ['nw', 'ne', 'sw', 'se'].includes(resizeDir);
+
+                if (isCorner) {
+                    if (resizeDir.includes('e')) { newWidth = Math.max(30, initialWidth + dx); diffX = newWidth - initialWidth; } 
+                    else { newWidth = Math.max(30, initialWidth - dx); diffX = -(newWidth - initialWidth); }
+                    scale = newWidth / initialWidth;
+                    newHeight = Math.max(20, initialHeight * scale); 
+                    if (resizeDir.includes('s')) { diffY = newHeight - initialHeight; } else { diffY = -(newHeight - initialHeight); }
+
+                    const span = resizeNode.querySelector('span');
+                    const newFontSize = initialFontSize * scale;
+                    span.style.fontSize = newFontSize + 'px';
+                    brushSize.value = Math.round(newFontSize / 4);
+
+                } else {
+                    // Only East (e) and West (w) directions remain
+                    if (resizeDir === 'e') { newWidth = Math.max(30, initialWidth + dx); diffX = newWidth - initialWidth; } 
+                    else if (resizeDir === 'w') { newWidth = Math.max(30, initialWidth - dx); diffX = -(newWidth - initialWidth); } 
+                    
+                    // Canva logic: when width changes and text wraps, box height auto-expands
+                    newHeight = 'auto'; 
+                }
+
+                resizeNode.style.width = newWidth + 'px';
+                resizeNode.style.left = (initialLeft + diffX / 2) + 'px';
+                resizeNode.style.top = (initialTop + diffY / 2) + 'px';
+                
+                // Height is in pixels when dragged from corner, 'auto' when dragged from side
+                resizeNode.style.height = newHeight === 'auto' ? 'auto' : newHeight + 'px';
+
+            }
+
+
+            else if (isDrawing && currentTool === 'brush') {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;   
+                const scaleY = canvas.height / rect.height; 
+                const px = (clientX - rect.left) * scaleX;
+                const py = (clientY - rect.top) * scaleY;
+                currentStroke.points.push({x: px, y: py});
+                ctx.lineTo(px, py);
+                ctx.strokeStyle = currentStroke.color;
+                ctx.lineWidth = currentStroke.size;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+            }
+        }
+
+        window.addEventListener('mousemove', (e) => handleGlobalMove(e.clientX, e.clientY));
+        window.addEventListener('touchmove', (e) => {
+            if (isSelecting || dragNode || resizeNode || isDrawing) e.preventDefault(); 
+            handleGlobalMove(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
+
+        function handleGlobalUp() {
+            if (isSelecting) {
+                isSelecting = false;
+                selectionBoxDOM.style.display = 'none';
+
+                const selRect = {
+                    left: parseFloat(selectionBoxDOM.style.left),
+                    top: parseFloat(selectionBoxDOM.style.top),
+                    right: parseFloat(selectionBoxDOM.style.left) + parseFloat(selectionBoxDOM.style.width),
+                    bottom: parseFloat(selectionBoxDOM.style.top) + parseFloat(selectionBoxDOM.style.height)
+                };
+
+                if (parseFloat(selectionBoxDOM.style.width) > 5) {
+                    document.querySelectorAll('.text-element').forEach(node => {
+                        const cx = parseFloat(node.style.left);
+                        const cy = parseFloat(node.style.top);
+                        const w = node.offsetWidth;
+                        const h = node.offsetHeight;
+                        
+                        if (selRect.left < cx + w/2 && selRect.right > cx - w/2 && selRect.top < cy + h/2 && selRect.bottom > cy - h/2) {
+                            selectedNodes.add(node);
+                            node.classList.add('multi-selected');
+                        }
+                    });
+                }
+            }
+
+            if (dragNode || resizeNode) {
+                dragNode = null;
+                resizeNode = null;
+                resizeDir = null;
+                groupDragData = []; 
+                queueSaveState(); 
+            }
+
+            if (isDrawing) { isDrawing = false; queueSaveState(); }
+        }
+
+        window.addEventListener('mouseup', handleGlobalUp);
+        window.addEventListener('mouseleave', handleGlobalUp); 
+        window.addEventListener('touchend', handleGlobalUp);
+
+        function createTextObject(x, y, restoreData = null) {
+            const node = document.createElement('div');
+            node.className = 'text-element editing';
+            
+            const span = document.createElement('span');
+            span.contentEditable = "false";
+            span.innerText = 'Text';
+            node.appendChild(span);
+
+            span.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const text = (e.originalEvent || e).clipboardData.getData('text/plain');
+                if (document.queryCommandSupported('insertText')) document.execCommand('insertText', false, text);
+                else {
+                    const selection = window.getSelection();
+                    if (!selection.rangeCount) return;
+                    selection.deleteFromDocument();
+                    selection.getRangeAt(0).insertNode(document.createTextNode(text));
+                    selection.collapseToEnd();
+                }
+            });
+
+            const handles = ['nw', 'ne', 'sw', 'se', 'e', 'w'];
+            handles.forEach(dir => {
+                const handle = document.createElement('div');
+                handle.className = `resize-handle ${dir}`;
+                handle.dataset.dir = dir;
+                node.appendChild(handle);
+
+                function initResize(clientX, clientY, e) {
+                    switchTool('pointer'); 
+                    clearMultiSelection(); 
+
+                    resizeNode = node;
+                    resizeDir = dir;
+                    dragStartX = clientX;
+                    dragStartY = clientY;
+                    initialLeft = parseFloat(node.style.left);
+                    initialTop = parseFloat(node.style.top);
+                    initialWidth = node.offsetWidth;
+                    initialHeight = node.offsetHeight;
+                    initialFontSize = parseFloat(window.getComputedStyle(span).fontSize);
+                    
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+
+                handle.addEventListener('mousedown', (e) => initResize(e.clientX, e.clientY, e));
+                handle.addEventListener('touchstart', (e) => initResize(e.touches[0].clientX, e.touches[0].clientY, e), {passive:false});
+            });
+
+            wrapper.appendChild(node);
+
+            if (restoreData) {
+                node.style.left = restoreData.left;
+                node.style.top = restoreData.top;
+                if (restoreData.width) node.style.width = restoreData.width;
+                if (restoreData.height) node.style.height = restoreData.height;
+                
+                // NEW: Load HTML on restore to preserve line breaks
+                if (restoreData.html) {
+                    span.innerHTML = restoreData.html;
+                } else {
+                    span.innerText = restoreData.text;
+                }
+                
+                span.style.color = restoreData.color;
+                span.style.fontFamily = restoreData.fontFamily;
+                span.style.fontWeight = restoreData.fontWeight;
+                span.style.fontSize = restoreData.fontSize;
+                span.dataset.fontValue = restoreData.fontValue;
+
+                if (restoreData.hasStroke) {
+                   const color = restoreData.strokeColor;
+                   const w = '0.04em';
+                   span.style.textShadow = `-${w} -${w} 0 ${color}, 0 -${w} 0 ${color}, ${w} -${w} 0 ${color}, ${w} 0 0 ${color}, ${w} ${w} 0 ${color}, 0 ${w} 0 ${color}, -${w} ${w} 0 ${color}, -${w} 0 0 ${color}`;
+                   span.dataset.hasStroke = 'true';
+                   span.dataset.strokeColor = color;
+                } else {
+                   span.style.textShadow = ''; 
+                   span.dataset.hasStroke = 'false';
+                }
+
+                if (!restoreData.isEditing) {
+                    node.classList.remove('editing');
+                    node.classList.add('locked');
+                } else {
+                    activeEditingNode = node;
+                    colorPicker.value = rgbToHex(span.style.color);
+                    fontSelector.value = span.dataset.fontValue;
+                    
+                    strokeToggle.checked = restoreData.hasStroke;
+                    strokeColorPicker.style.display = restoreData.hasStroke ? 'block' : 'none';
+                    if (restoreData.hasStroke) strokeColorPicker.value = restoreData.strokeColor;
+                }
+            } 
+            else {
+                node.style.left = x + 'px';
+                node.style.top = y + 'px';
+                const startFontSize = parseInt(brushSize.value) * 4;
+                const selectedFontOption = fontSelector.options[fontSelector.selectedIndex];
+                
+                span.style.color = colorPicker.value;
+                span.style.fontFamily = selectedFontOption.value;
+                span.style.fontWeight = selectedFontOption.dataset.weight || 'normal';
+                span.style.fontSize = startFontSize + 'px';
+                span.dataset.fontValue = selectedFontOption.value; 
+
+                const hasStroke = strokeToggle.checked;
+                if (hasStroke) {
+                    const color = strokeColorPicker.value;
+                    const w = '0.04em';
+                    span.style.textShadow = `-${w} -${w} 0 ${color}, 0 -${w} 0 ${color}, ${w} -${w} 0 ${color}, ${w} 0 0 ${color}, ${w} ${w} 0 ${color}, 0 ${w} 0 ${color}, -${w} ${w} 0 ${color}, -${w} 0 0 ${color}`;
+                    span.dataset.hasStroke = 'true';
+                    span.dataset.strokeColor = color;
+                } else {
+                    span.style.textShadow = '';
+                    span.dataset.hasStroke = 'false';
+                }
+
+                activeEditingNode = node;
+                switchTool('pointer'); 
+                span.contentEditable = "true";
+                setTimeout(() => { span.focus(); document.execCommand('selectAll', false, null); }, 10);
+                queueSaveState(); 
+            }
+
+            span.addEventListener('input', queueSaveState); 
+
+            node.lock = function() {
+                if (span.innerText.trim() === '') {
+                    node.remove(); 
+                    if (activeEditingNode === node) activeEditingNode = null;
+                    queueSaveState();
+                    return;
+                }
+                node.classList.remove('editing');
+                node.classList.add('locked');
+                span.contentEditable = "false";
+                if (activeEditingNode === node) activeEditingNode = null;
+            };
+
+            function initNodeDrag(clientX, clientY, e) {
+                if (e.target.closest('.resize-handle')) return;
+                switchTool('pointer');
+
+                if (selectedNodes.has(node)) {
+                    dragNode = node;
+                    dragStartX = clientX;
+                    dragStartY = clientY;
+                    groupDragData = [];
+                    selectedNodes.forEach(n => groupDragData.push({ node: n, initialLeft: parseFloat(n.style.left), initialTop: parseFloat(n.style.top) }));
+                    if (e.target !== span) e.preventDefault();
+                    return; 
+                }
+
+                clearMultiSelection();
+                if (e.target === span && span.contentEditable === "true") return; 
+                
+                document.querySelectorAll('.text-element.editing').forEach(n => { if (n !== node) n.lock(); });
+                node.classList.remove('locked');
+                node.classList.add('editing');
+                activeEditingNode = node;
+                
+                colorPicker.value = rgbToHex(span.style.color);
+                fontSelector.value = span.dataset.fontValue;
+                brushSize.value = Math.round(parseFloat(span.style.fontSize) / 4);
+
+                const hasStroke = span.dataset.hasStroke === 'true';
+                strokeToggle.checked = hasStroke;
+                strokeColorPicker.style.display = hasStroke ? 'block' : 'none';
+                if (hasStroke) strokeColorPicker.value = span.dataset.strokeColor || '#ffffff';
+
+                dragNode = node;
+                dragStartX = clientX;
+                dragStartY = clientY;
+                initialLeft = parseFloat(node.style.left);
+                initialTop = parseFloat(node.style.top);
+
+                if (e.target !== span) e.preventDefault(); 
+                else if (span.contentEditable === "false") window.getSelection().removeAllRanges();
+            }
+
+            node.addEventListener('mousedown', (e) => initNodeDrag(e.clientX, e.clientY, e));
+            node.addEventListener('touchstart', (e) => initNodeDrag(e.touches[0].clientX, e.touches[0].clientY, e), {passive:false});
+
+            node.addEventListener('dblclick', (e) => {
+                if (e.target.closest('.resize-handle')) return;
+                clearMultiSelection(); 
+                switchTool('pointer');
+                node.classList.remove('locked');
+                node.classList.add('editing');
+                activeEditingNode = node;
+                span.contentEditable = "true"; 
+                span.focus();
+                document.execCommand('selectAll', false, null);
+            });
+        }
+
+        colorPicker.addEventListener('input', () => {
+            if (activeEditingNode) { activeEditingNode.querySelector('span').style.color = colorPicker.value; queueSaveState(); }
+            else if (selectedNodes.size > 0) {
+                selectedNodes.forEach(node => node.querySelector('span').style.color = colorPicker.value);
+                queueSaveState();
+            }
+        });
+
+        fontSelector.addEventListener('change', () => {
+            const selectedOption = fontSelector.options[fontSelector.selectedIndex];
+            if (activeEditingNode) {
+                const span = activeEditingNode.querySelector('span');
+                span.style.fontFamily = selectedOption.value;
+                span.style.fontWeight = selectedOption.dataset.weight || 'normal';
+                span.dataset.fontValue = selectedOption.value; 
+                queueSaveState();
+            } else if (selectedNodes.size > 0) {
+                selectedNodes.forEach(node => {
+                    const span = node.querySelector('span');
+                    span.style.fontFamily = selectedOption.value;
+                    span.style.fontWeight = selectedOption.dataset.weight || 'normal';
+                    span.dataset.fontValue = selectedOption.value; 
+                });
+                queueSaveState();
+            }
+        });
+
+        function rgbToHex(rgb) {
+            const rgbVals = rgb.match(/\d+/g);
+            if(!rgbVals) return "#000000";
+            return "#" + rgbVals.map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+        }
+
+        imageLoader.addEventListener('change', function(e) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+
+                    originalImage = img; 
+                    const MAX_WIDTH = 1200, MAX_HEIGHT = 1200;
+                    let newWidth = img.width, newHeight = img.height;
+                    if (newWidth > MAX_WIDTH || newHeight > MAX_HEIGHT) {
+                        const ratio = Math.min(MAX_WIDTH / newWidth, MAX_HEIGHT / newHeight);
+                        newWidth = Math.round(newWidth * ratio);
+                        newHeight = Math.round(newHeight * ratio);
+                    }
+                    imgScaleRatio = img.width / newWidth; 
+
+                    canvas.width = newWidth;
+                    canvas.height = newHeight;
+                    
+                    redrawCanvas();
+                    updateCursor();
+                    
+                    queueSaveState();
+                }
+
+                img.src = event.target.result;
+            }
+            if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
+        });
+
+        clearBtn.addEventListener('click', () => {
+           originalImage = null; 
+           imgScaleRatio = 1; 
+           
+           canvas.width = 900;
+           canvas.height = 500;
+           
+           strokes = []; 
+           fillWhiteBackground(); 
+           document.querySelectorAll('.text-element').forEach(node => node.remove());
+           activeEditingNode = null; 
+           clearMultiSelection(); 
+           imageLoader.value = ''; 
+           queueSaveState();
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            lockAllTexts(); 
+            const exportCanvas = document.createElement('canvas');
+            const expWidth = originalImage ? originalImage.width : canvas.width;
+            const expHeight = originalImage ? originalImage.height : canvas.height;
+            exportCanvas.width = expWidth; exportCanvas.height = expHeight;
+            const expCtx = exportCanvas.getContext('2d');
+
+            if (originalImage) expCtx.drawImage(originalImage, 0, 0);
+            else { expCtx.fillStyle = "#ffffff"; expCtx.fillRect(0, 0, expWidth, expHeight); }
+
+            strokes.forEach(stroke => {
+                if (stroke.points.length < 1) return;
+                expCtx.beginPath();
+                expCtx.moveTo(stroke.points[0].x * imgScaleRatio, stroke.points[0].y * imgScaleRatio);
+                for (let i = 1; i < stroke.points.length; i++) expCtx.lineTo(stroke.points[i].x * imgScaleRatio, stroke.points[i].y * imgScaleRatio);
+                expCtx.strokeStyle = stroke.color; expCtx.lineWidth = stroke.size * imgScaleRatio; 
+                expCtx.lineCap = 'round'; expCtx.lineJoin = 'round'; expCtx.stroke();
+            });
+
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+
+            document.querySelectorAll('.text-element').forEach(node => {
+                const span = node.querySelector('span');
+                
+                // NEW: Parser that reliably converts browser line-break HTML (br, div) to \n characters
+                let rawHtml = span.innerHTML;
+                rawHtml = rawHtml.replace(/<br\s*[\/]?>/gi, '\n')
+                                 .replace(/<\/div>\s*<div/gi, '\n')
+                                 .replace(/<div[^>]*>/gi, '\n')
+                                 .replace(/<\/p>\s*<p/gi, '\n')
+                                 .replace(/<p[^>]*>/gi, '\n')
+                                 .replace(/&nbsp;/gi, ' ');
+                
+                let tempDiv = document.createElement('div');
+                tempDiv.innerHTML = rawHtml;
+                let finalText = tempDiv.textContent || tempDiv.innerText || "";
+                
+                // Universal separator for \r\n (Windows) or \n (Mac/Linux)
+                const textLines = finalText.split(/\r?\n/);
+                
+                const cssX = parseFloat(node.style.left), cssY = parseFloat(node.style.top);
+                const canvasX = cssX * scaleX * imgScaleRatio, canvasY = cssY * scaleY * imgScaleRatio;
+                const canvasMaxWidth = Math.max(10, ((parseFloat(node.style.width) || node.offsetWidth) - 20)) * scaleX * imgScaleRatio;
+                const canvasFontSize = parseFloat(span.style.fontSize) * scaleX * imgScaleRatio;
+                
+                expCtx.font = `${span.style.fontWeight || 'normal'} ${canvasFontSize}px ${span.style.fontFamily}`;
+                expCtx.fillStyle = span.style.color; expCtx.textAlign = 'center'; expCtx.textBaseline = 'middle'; 
+
+                const hasStroke = span.dataset.hasStroke === 'true';
+                const strokeColor = span.dataset.strokeColor || '#ffffff';
+
+                const lineHeight = canvasFontSize * 1.2; 
+                let wrappedLines = [];
+                textLines.forEach(line => {
+                    let words = line.split(' '), currentLine = '';
+                    for (let i = 0; i < words.length; i++) {
+                        let testLine = currentLine + words[i] + ' ';
+                        if (expCtx.measureText(testLine).width > canvasMaxWidth && i > 0) {
+                            wrappedLines.push(currentLine.trim()); currentLine = words[i] + ' ';
+                        } else currentLine = testLine;
+                    }
+                    wrappedLines.push(currentLine.trim());
+                });
+
+                let currentY = canvasY - ((wrappedLines.length * lineHeight) / 2) + (lineHeight / 2) + (canvasFontSize * 0.08);
+                
+                wrappedLines.forEach(line => { 
+                    if (hasStroke) {
+                        expCtx.strokeStyle = strokeColor;
+                        expCtx.lineWidth = canvasFontSize * 0.08; 
+                        expCtx.lineJoin = 'round';
+                        expCtx.strokeText(line, canvasX, currentY);
+                    }
+                    expCtx.fillText(line, canvasX, currentY); 
+                    currentY += lineHeight; 
+                });
+            });
+
+            const link = document.createElement('a');
+            link.download = 'my_design.png'; link.href = exportCanvas.toDataURL('image/png'); link.click();
+        });
+    </script>
+</body>
+</html>
