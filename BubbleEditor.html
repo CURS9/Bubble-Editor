@@ -355,7 +355,7 @@
                     top: node.style.top,
                     width: node.style.width,
                     height: node.style.height,
-                    html: span.innerHTML, // NEW: save HTML to preserve line breaks
+                    html: span.innerHTML, 
                     text: span.innerText, 
                     color: span.style.color,
                     fontFamily: span.style.fontFamily,
@@ -687,11 +687,9 @@
                     brushSize.value = Math.round(newFontSize / 4);
 
                 } else {
-                    // Only East (e) and West (w) directions remain
                     if (resizeDir === 'e') { newWidth = Math.max(30, initialWidth + dx); diffX = newWidth - initialWidth; } 
                     else if (resizeDir === 'w') { newWidth = Math.max(30, initialWidth - dx); diffX = -(newWidth - initialWidth); } 
                     
-                    // Canva logic: when width changes and text wraps, box height auto-expands
                     newHeight = 'auto'; 
                 }
 
@@ -699,7 +697,6 @@
                 resizeNode.style.left = (initialLeft + diffX / 2) + 'px';
                 resizeNode.style.top = (initialTop + diffY / 2) + 'px';
                 
-                // Height is in pixels when dragged from corner, 'auto' when dragged from side
                 resizeNode.style.height = newHeight === 'auto' ? 'auto' : newHeight + 'px';
 
             }
@@ -828,7 +825,6 @@
                 if (restoreData.width) node.style.width = restoreData.width;
                 if (restoreData.height) node.style.height = restoreData.height;
                 
-                // NEW: Load HTML on restore to preserve line breaks
                 if (restoreData.html) {
                     span.innerHTML = restoreData.html;
                 } else {
@@ -868,7 +864,13 @@
             else {
                 node.style.left = x + 'px';
                 node.style.top = y + 'px';
+                
                 const startFontSize = parseInt(brushSize.value) * 4;
+                
+                
+                node.style.width = Math.max(100, startFontSize * 2) + 'px';
+                node.style.height = 'auto';
+
                 const selectedFontOption = fontSelector.options[fontSelector.selectedIndex];
                 
                 span.style.color = colorPicker.value;
@@ -1073,7 +1075,6 @@
             document.querySelectorAll('.text-element').forEach(node => {
                 const span = node.querySelector('span');
                 
-                // NEW: Parser that reliably converts browser line-break HTML (br, div) to \n characters
                 let rawHtml = span.innerHTML;
                 rawHtml = rawHtml.replace(/<br\s*[\/]?>/gi, '\n')
                                  .replace(/<\/div>\s*<div/gi, '\n')
@@ -1086,7 +1087,6 @@
                 tempDiv.innerHTML = rawHtml;
                 let finalText = tempDiv.textContent || tempDiv.innerText || "";
                 
-                // Universal separator for \r\n (Windows) or \n (Mac/Linux)
                 const textLines = finalText.split(/\r?\n/);
                 
                 const cssX = parseFloat(node.style.left), cssY = parseFloat(node.style.top);
@@ -1100,18 +1100,60 @@
                 const hasStroke = span.dataset.hasStroke === 'true';
                 const strokeColor = span.dataset.strokeColor || '#ffffff';
 
+
+
                 const lineHeight = canvasFontSize * 1.2; 
                 let wrappedLines = [];
+                
                 textLines.forEach(line => {
-                    let words = line.split(' '), currentLine = '';
+                    let words = line.split(' ');
+                    let currentLine = '';
+
                     for (let i = 0; i < words.length; i++) {
-                        let testLine = currentLine + words[i] + ' ';
-                        if (expCtx.measureText(testLine).width > canvasMaxWidth && i > 0) {
-                            wrappedLines.push(currentLine.trim()); currentLine = words[i] + ' ';
-                        } else currentLine = testLine;
+                        let word = words[i];
+                        let testLine = currentLine + word + ' ';
+
+                        
+                        if (expCtx.measureText(testLine).width > canvasMaxWidth) {
+                            
+                            
+                            if (expCtx.measureText(word).width > canvasMaxWidth) {
+                                
+                                if (currentLine.trim() !== '') {
+                                    wrappedLines.push(currentLine.trim());
+                                    currentLine = '';
+                                }
+                                
+                                                                let tempWord = '';
+                                for (let j = 0; j < word.length; j++) {
+                                    let testChar = tempWord + word[j];
+                                    if (expCtx.measureText(testChar).width > canvasMaxWidth && tempWord !== '') {
+                                        wrappedLines.push(tempWord);
+                                        tempWord = word[j];
+                                    } else {
+                                        tempWord = testChar;
+                                    }
+                                }
+                                currentLine = tempWord + ' ';
+                            } 
+                            
+                            else {
+                                if (currentLine.trim() !== '') {
+                                    wrappedLines.push(currentLine.trim());
+                                }
+                                currentLine = word + ' ';
+                            }
+                        } else {
+                           
+                            currentLine = testLine;
+                        }
                     }
-                    wrappedLines.push(currentLine.trim());
+                    if (currentLine.trim() !== '') {
+                        wrappedLines.push(currentLine.trim());
+                    }
                 });
+
+
 
                 let currentY = canvasY - ((wrappedLines.length * lineHeight) / 2) + (lineHeight / 2) + (canvasFontSize * 0.08);
                 
