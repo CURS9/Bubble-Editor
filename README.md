@@ -14,7 +14,7 @@ A lightweight, browser-based editor for adding text and drawings to manga/comic 
 ## Usage
 No installation required. Open directly in your browser:
 
-[Live Demo](https://curs9.github.io/Bubble-Editor-/)
+[Live Demo](https://curs9.github.io/Bubble-Editor/)
 
 Or download `BubbleEditor.html` and `wild.ttf` and open locally in your browser.
 
