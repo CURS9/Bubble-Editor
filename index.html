@@ -252,6 +252,8 @@
         .resize-handle.e { right: -4px; cursor: ew-resize; }
         .resize-handle.w { left: -4px; cursor: ew-resize; }
         
+            .canvas-wrapper.brush-mode .text-element {
+            pointer-events: none !important;
         
     </style>
 </head>
@@ -334,6 +336,7 @@
         const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         const wrapper = document.querySelector('.canvas-wrapper');
+        wrapper.classList.add('brush-mode');
         const selectionBoxDOM = document.getElementById('selectionBox');
         
         const colorPicker = document.getElementById('colorPicker');
@@ -524,22 +527,30 @@
         saveState();
 
         function switchTool(tool) {
-            if (currentTool === tool) return; 
-            currentTool = tool;
-            pointerBtn.classList.remove('active-tool');
-            brushBtn.classList.remove('active-tool');
-            textBtn.classList.remove('active-tool');
-            colorPicker.value = '#000000';
-            
-            const strokeGroup = document.getElementById('strokeGroup');
-            strokeGroup.style.display = (tool === 'text' || tool === 'pointer') ? 'flex' : 'none';
-            
-            if (tool === 'pointer') pointerBtn.classList.add('active-tool');
-            if (tool === 'brush') { brushBtn.classList.add('active-tool'); brushSize.value = 5; brushSizeNumber.value = 5; }
-            if (tool === 'text') { textBtn.classList.add('active-tool'); brushSize.value = 5; brushSizeNumber.value = 5; strokeGroup.style.display = 'flex'; }
-            
-            updateCursor();
-        }
+    if (currentTool === tool) return; 
+    currentTool = tool;
+    pointerBtn.classList.remove('active-tool');
+    brushBtn.classList.remove('active-tool');
+    textBtn.classList.remove('active-tool');
+    colorPicker.value = '#000000';
+    
+    const strokeGroup = document.getElementById('strokeGroup');
+    strokeGroup.style.display = (tool === 'text' || tool === 'pointer') ? 'flex' : 'none';
+    
+    
+    if (tool === 'brush') {
+        wrapper.classList.add('brush-mode');
+    } else {
+        wrapper.classList.remove('brush-mode');
+    }
+    
+
+    if (tool === 'pointer') pointerBtn.classList.add('active-tool');
+    if (tool === 'brush') { brushBtn.classList.add('active-tool'); brushSize.value = 5; brushSizeNumber.value = 5; }
+    if (tool === 'text') { textBtn.classList.add('active-tool'); brushSize.value = 5; brushSizeNumber.value = 5; strokeGroup.style.display = 'flex'; }
+    
+    updateCursor();
+}
 
         pointerBtn.addEventListener('click', () => { lockAllTexts(); switchTool('pointer'); });
         brushBtn.addEventListener('click', () => { lockAllTexts(); switchTool('brush'); });
