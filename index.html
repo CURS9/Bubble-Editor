@@ -28,7 +28,7 @@
             background-color: #000000; 
             background-image: radial-gradient(circle at 50% 0%, rgba(30, 30, 30, 1) 0%, transparent 70%);
             margin: 0; 
-            padding: 20px; 
+             padding: 0 20px 20px 20px; 
             color: #ffffff;
             overflow-x: hidden;
         }
@@ -43,10 +43,18 @@
             gap: 25px; 
             align-items: flex-end; 
             margin-bottom: 20px; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            max-width: 1000px;
-        }
+           flex-wrap: wrap; 
+           justify-content: center; 
+           max-width: 1000px;
+    
+           
+           position: sticky; 
+           top: 0px; 
+           z-index: 1010; 
+
+
+
+          }
 
         .tool-group { 
             display: flex; 
@@ -92,7 +100,8 @@
             transform: scale(1.05);
         }
 
-        select, input[type="file"], input[type="color"] { 
+        
+        select, input[type="file"], input[type="color"], input[type="number"] { 
             padding: 8px; 
             border: 1px solid #333; 
             border-radius: 6px; 
@@ -102,9 +111,25 @@
             font-family: inherit;
             cursor: pointer;
         }
-        select:hover, input[type="file"]:hover { border-color: #555; }
+        select:hover, input[type="file"]:hover, input[type="number"]:hover { border-color: #555; }
         input[type="color"] { padding: 2px; height: 35px; width: 45px; }
         input[type="range"] { cursor: pointer; }
+
+        
+        input[type="number"] {
+            width: 45px;
+            padding: 6px;
+            text-align: center;
+            cursor: text;
+        }
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
 
         button { cursor: pointer; transition: all 0.2s ease; }
         #undoBtn, #clearBtn, #downloadBtn { 
@@ -253,9 +278,13 @@
             <input type="color" id="colorPicker" value="#000000">
         </div>
 
+        
         <div class="tool-group">
             <label for="brushSize">Size</label>
-            <input type="range" id="brushSize" min="1" max="50" value="5">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="range" id="brushSize" min="1" max="50" value="5">
+                <input type="number" id="brushSizeNumber" min="1" max="50" value="5" title="Size Value">
+            </div>
         </div>
 
         <div class="tool-group">
@@ -265,6 +294,8 @@
                 <option value="'Bangers', cursive" data-weight="normal">Bangers (Comic)</option>
                 <option value="'Pacifico', cursive" data-weight="normal">Pacifico (Handwriting)</option>
                 <option value="'Oswald', sans-serif" data-weight="normal">Oswald</option>
+                <option value="Arial, Helvetica, sans-serif" data-weight="normal">Arial</option>
+                <option value="Verdana, Geneva, sans-serif" data-weight="normal">Verdana</option>
                 <option value="'Times New Roman', Times, serif" data-weight="normal">Times New Roman</option>
                 <option value="sans-serif" data-weight="normal">Standard Sans-Serif</option>
             </select>
@@ -307,6 +338,7 @@
         
         const colorPicker = document.getElementById('colorPicker');
         const brushSize = document.getElementById('brushSize');
+        const brushSizeNumber = document.getElementById('brushSizeNumber'); 
         const fontSelector = document.getElementById('fontSelector');
         
         const strokeToggle = document.getElementById('strokeToggle');
@@ -503,8 +535,8 @@
             strokeGroup.style.display = (tool === 'text' || tool === 'pointer') ? 'flex' : 'none';
             
             if (tool === 'pointer') pointerBtn.classList.add('active-tool');
-            if (tool === 'brush') { brushBtn.classList.add('active-tool'); brushSize.value = 5; }
-            if (tool === 'text') { textBtn.classList.add('active-tool'); brushSize.value = 5; strokeGroup.style.display = 'flex'; }
+            if (tool === 'brush') { brushBtn.classList.add('active-tool'); brushSize.value = 5; brushSizeNumber.value = 5; }
+            if (tool === 'text') { textBtn.classList.add('active-tool'); brushSize.value = 5; brushSizeNumber.value = 5; strokeGroup.style.display = 'flex'; }
             
             updateCursor();
         }
@@ -570,20 +602,35 @@
 
         window.addEventListener('resize', updateCursor);
         
-        brushSize.addEventListener('input', () => {
+        
+        function updateSizeFromInput(val) {
+            let size = parseInt(val);
+            if (isNaN(size) || size < 1) size = 1;
+            if (size > 50) size = 50;
+            
+            brushSize.value = size;
+            brushSizeNumber.value = size;
+
             if (activeEditingNode) {
                 const span = activeEditingNode.querySelector('span');
-                const newSize = parseInt(brushSize.value) * 4;
+                const newSize = size * 4;
                 span.style.fontSize = newSize + 'px';
             } else if (selectedNodes.size > 0) {
-                const newSize = parseInt(brushSize.value) * 4;
+                const newSize = size * 4;
                 selectedNodes.forEach(node => {
                     node.querySelector('span').style.fontSize = newSize + 'px';
                 });
             }
             updateCursor();
-        });
+        }
+
+        brushSize.addEventListener('input', (e) => updateSizeFromInput(e.target.value));
+        brushSizeNumber.addEventListener('input', (e) => updateSizeFromInput(e.target.value));
+
         brushSize.addEventListener('change', () => {
+            if (activeEditingNode || selectedNodes.size > 0) queueSaveState();
+        });
+        brushSizeNumber.addEventListener('change', () => {
             if (activeEditingNode || selectedNodes.size > 0) queueSaveState();
         });
 
@@ -685,6 +732,7 @@
                     const newFontSize = initialFontSize * scale;
                     span.style.fontSize = newFontSize + 'px';
                     brushSize.value = Math.round(newFontSize / 4);
+                    brushSizeNumber.value = brushSize.value; 
 
                 } else {
                     if (resizeDir === 'e') { newWidth = Math.max(30, initialWidth + dx); diffX = newWidth - initialWidth; } 
@@ -867,7 +915,7 @@
                 
                 const startFontSize = parseInt(brushSize.value) * 4;
                 
-                // YENİ EKLENEN KISIM: Başlangıç çerçevesine ideal bir genişlik veriyoruz.
+                
                 node.style.width = Math.max(100, startFontSize * 2) + 'px';
                 node.style.height = 'auto';
 
@@ -937,7 +985,10 @@
                 
                 colorPicker.value = rgbToHex(span.style.color);
                 fontSelector.value = span.dataset.fontValue;
+                
+                
                 brushSize.value = Math.round(parseFloat(span.style.fontSize) / 4);
+                brushSizeNumber.value = brushSize.value;
 
                 const hasStroke = span.dataset.hasStroke === 'true';
                 strokeToggle.checked = hasStroke;
@@ -1113,19 +1164,18 @@
                         let word = words[i];
                         let testLine = currentLine + word + ' ';
 
-                        // Eğer kelime eklendiğinde genişliği aşıyorsa
+                        
                         if (expCtx.measureText(testLine).width > canvasMaxWidth) {
                             
-                            // DURUM 1: Kelimenin TEK BAŞINA kendisi bile kutudan genişse (Boşluksuz uzun metinler)
+                            
                             if (expCtx.measureText(word).width > canvasMaxWidth) {
-                                // Önceki satırda kalanları yazdır
+                                
                                 if (currentLine.trim() !== '') {
                                     wrappedLines.push(currentLine.trim());
                                     currentLine = '';
                                 }
                                 
-                                // Uzun kelimeyi harf harf böl (word-break: break-word simülasyonu)
-                                let tempWord = '';
+                                                                let tempWord = '';
                                 for (let j = 0; j < word.length; j++) {
                                     let testChar = tempWord + word[j];
                                     if (expCtx.measureText(testChar).width > canvasMaxWidth && tempWord !== '') {
@@ -1137,7 +1187,7 @@
                                 }
                                 currentLine = tempWord + ' ';
                             } 
-                            // DURUM 2: Normal kelime kaydırma (kelime sığıyor ama bu satıra sığmıyor)
+                            
                             else {
                                 if (currentLine.trim() !== '') {
                                     wrappedLines.push(currentLine.trim());
@@ -1145,7 +1195,7 @@
                                 currentLine = word + ' ';
                             }
                         } else {
-                            // Sığıyorsa satıra eklemeye devam et
+                           
                             currentLine = testLine;
                         }
                     }
