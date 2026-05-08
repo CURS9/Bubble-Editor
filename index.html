@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drawing & Text Editor Pro - Dark Mode</title>
     
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Oswald:wght@400;700&family=Pacifico&display=swap" rel="stylesheet">
 
     <style>
-        /* PASTE YOUR LOCAL FONTS HERE */
         @font-face {
             font-family: 'Wild';
             src: url('wild.ttf') format('truetype'); 
@@ -17,9 +15,6 @@
             font-style: normal;
         }
         
-        /* =================================================================
-           OBSIDIAN BLACK OPS INSPIRED INTERFACE (DARK MODE)
-           ================================================================= */
         body { 
             font-family: 'Inter', -apple-system, sans-serif; 
             display: flex; 
@@ -28,7 +23,7 @@
             background-color: #000000; 
             background-image: radial-gradient(circle at 50% 0%, rgba(30, 30, 30, 1) 0%, transparent 70%);
             margin: 0; 
-             padding: 0 20px 20px 20px; 
+            padding: 0 20px 20px 20px; 
             color: #ffffff;
             overflow-x: hidden;
         }
@@ -43,18 +38,13 @@
             gap: 25px; 
             align-items: flex-end; 
             margin-bottom: 20px; 
-           flex-wrap: wrap; 
-           justify-content: center; 
-           max-width: 1000px;
-    
-           
-           position: sticky; 
-           top: 0px; 
-           z-index: 1010; 
-
-
-
-          }
+            flex-wrap: wrap; 
+            justify-content: center; 
+            max-width: 1000px;
+            position: sticky; 
+            top: 0px; 
+            z-index: 1010; 
+        }
 
         .tool-group { 
             display: flex; 
@@ -68,6 +58,12 @@
         }
 
         .tool-group > div { display: flex; gap: 8px; }
+
+        .icon-tools {
+            display: grid !important;
+            grid-template-columns: repeat(3, 45px);
+            gap: 8px;
+        }
 
         .tool-btn {
             background-color: #111; 
@@ -100,7 +96,6 @@
             transform: scale(1.05);
         }
 
-        
         select, input[type="file"], input[type="color"], input[type="number"] { 
             padding: 8px; 
             border: 1px solid #333; 
@@ -111,27 +106,30 @@
             font-family: inherit;
             cursor: pointer;
         }
+        
         select:hover, input[type="file"]:hover, input[type="number"]:hover { border-color: #555; }
         input[type="color"] { padding: 2px; height: 35px; width: 45px; }
         input[type="range"] { cursor: pointer; }
 
-        
         input[type="number"] {
             width: 45px;
             padding: 6px;
             text-align: center;
             cursor: text;
         }
+        
         input[type="number"]::-webkit-inner-spin-button, 
         input[type="number"]::-webkit-outer-spin-button { 
             -webkit-appearance: none; 
             margin: 0; 
         }
+        
         input[type="number"] {
             -moz-appearance: textfield;
         }
 
         button { cursor: pointer; transition: all 0.2s ease; }
+        
         #undoBtn, #clearBtn, #downloadBtn { 
             background-color: #111; 
             color: #ccc; 
@@ -172,7 +170,6 @@
             height: auto;
         }
 
-        /* MULTI-SELECTION BOX */
         .selection-box {
             position: absolute;
             border: 1px dashed #00d2ff;
@@ -205,7 +202,6 @@
             display: none; 
         }
 
-        /* MULTI-SELECTED ELEMENTS APPEARANCE */
         .text-element.multi-selected {
             z-index: 1001;
             border: 2px dashed #8e44ad;
@@ -242,6 +238,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.3);
             z-index: 10;
         }
+        
         .resize-handle.se, .resize-handle.sw, .resize-handle.ne, .resize-handle.nw { width: 12px; height: 12px; border-radius: 50%; }
         .resize-handle.e, .resize-handle.w { width: 6px; height: 16px; border-radius: 3px; top: 50%; transform: translateY(-50%); }
         
@@ -252,8 +249,9 @@
         .resize-handle.e { right: -4px; cursor: ew-resize; }
         .resize-handle.w { left: -4px; cursor: ew-resize; }
         
-            .canvas-wrapper.brush-mode .text-element {
+        .canvas-wrapper.brush-mode .text-element {
             pointer-events: none !important;
+        }
         
     </style>
 </head>
@@ -272,6 +270,34 @@
                 <button id="textBtn" class="tool-btn" title="Text (T)">
                     <span style="font-family: 'Times New Roman', Georgia, serif; font-size: 24px; font-weight: bold; font-style: italic; line-height: 1;">T</span>
                 </button>
+
+
+
+
+
+
+         <button id="newToolBtn" class="tool-btn" title="Pan & Zoom (H)">
+    <svg width="28" height="28" viewBox="-3 -1 30 26" style="overflow: visible;" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <g transform="translate(-5.5, 0.5) scale(0.55)" stroke-width="3.5">
+            <path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"></path>
+            <path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2"></path>
+            <path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"></path>
+            <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path>
+        </g>
+        <line x1="16.5" y1="1" x2="7.5" y2="23" stroke-width="1.5"></line>
+        <g transform="translate(15.5, 7.5) scale(0.55)" stroke-width="3.5">
+            <circle cx="13" cy="11" r="8"></circle>
+            <line x1="7.34" y1="16.66" x2="3" y2="21"></line>
+        </g>
+    </svg>
+</button>
+
+
+
+
+
+
+
             </div>
         </div>
 
@@ -280,7 +306,6 @@
             <input type="color" id="colorPicker" value="#000000">
         </div>
 
-        
         <div class="tool-group">
             <label for="brushSize">Size</label>
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -353,6 +378,7 @@
         const pointerBtn = document.getElementById('pointerBtn');
         const brushBtn = document.getElementById('brushBtn');
         const textBtn = document.getElementById('textBtn');
+        const newToolBtn = document.getElementById('newToolBtn');
         const undoBtn = document.getElementById('undoBtn');
 
         let isDrawing = false;
@@ -369,12 +395,29 @@
         let strokes = [];         
         let currentStroke = null; 
 
+
+
+
         let undoStack = [];
         let isUndoing = false;
         let saveTimeout;
         let clipboardData = null; 
 
+        let zoomLevel = 1;
+        let panX = 0;
+        let panY = 0;
+        let isPanning = false;
+        let panStartX = 0;
+        let panStartY = 0;
+
+        function applyPanZoom() {
+            wrapper.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
+        }
+
         function queueSaveState() {
+
+
+
             if (isUndoing) return;
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(saveState, 50); 
@@ -508,10 +551,15 @@
                 fillWhiteBackground();
             }
 
+
+
+
+
             strokes.forEach(stroke => {
                 if (stroke.points.length < 1) return;
                 ctx.beginPath();
                 ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+                ctx.lineTo(stroke.points[0].x, stroke.points[0].y);
                 for (let i = 1; i < stroke.points.length; i++) {
                     ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
                 }
@@ -521,40 +569,45 @@
                 ctx.lineJoin = 'round';
                 ctx.stroke();
             });
+
+
+
+
         }
         
         fillWhiteBackground();
         saveState();
 
         function switchTool(tool) {
-    if (currentTool === tool) return; 
-    currentTool = tool;
-    pointerBtn.classList.remove('active-tool');
-    brushBtn.classList.remove('active-tool');
-    textBtn.classList.remove('active-tool');
-    colorPicker.value = '#000000';
-    
-    const strokeGroup = document.getElementById('strokeGroup');
-    strokeGroup.style.display = (tool === 'text' || tool === 'pointer') ? 'flex' : 'none';
-    
-    
-    if (tool === 'brush') {
-        wrapper.classList.add('brush-mode');
-    } else {
-        wrapper.classList.remove('brush-mode');
-    }
-    
-
-    if (tool === 'pointer') pointerBtn.classList.add('active-tool');
-    if (tool === 'brush') { brushBtn.classList.add('active-tool'); brushSize.value = 5; brushSizeNumber.value = 5; }
-    if (tool === 'text') { textBtn.classList.add('active-tool'); brushSize.value = 5; brushSizeNumber.value = 5; strokeGroup.style.display = 'flex'; }
-    
-    updateCursor();
-}
+            if (currentTool === tool) return; 
+            currentTool = tool;
+            pointerBtn.classList.remove('active-tool');
+            brushBtn.classList.remove('active-tool');
+            textBtn.classList.remove('active-tool');
+            newToolBtn.classList.remove('active-tool');
+            colorPicker.value = '#000000';
+            
+            const strokeGroup = document.getElementById('strokeGroup');
+            strokeGroup.style.display = (tool === 'text' || tool === 'pointer') ? 'flex' : 'none';
+            
+            if (tool === 'brush') {
+                wrapper.classList.add('brush-mode');
+            } else {
+                wrapper.classList.remove('brush-mode');
+            }
+            
+            if (tool === 'pointer') pointerBtn.classList.add('active-tool');
+            if (tool === 'brush') { brushBtn.classList.add('active-tool'); brushSize.value = 5; brushSizeNumber.value = 5; }
+            if (tool === 'text') { textBtn.classList.add('active-tool'); brushSize.value = 5; brushSizeNumber.value = 5; strokeGroup.style.display = 'flex'; }
+            if (tool === 'newTool') newToolBtn.classList.add('active-tool');
+            
+            updateCursor();
+        }
 
         pointerBtn.addEventListener('click', () => { lockAllTexts(); switchTool('pointer'); });
         brushBtn.addEventListener('click', () => { lockAllTexts(); switchTool('brush'); });
         textBtn.addEventListener('click', () => { lockAllTexts(); switchTool('text'); });
+        newToolBtn.addEventListener('click', () => { lockAllTexts(); switchTool('newTool'); });
 
         strokeToggle.addEventListener('change', () => {
             strokeColorPicker.style.display = strokeToggle.checked ? 'block' : 'none';
@@ -588,11 +641,19 @@
             }
         }
 
+
+
+
         function updateCursor() {
+            if (currentTool === 'newTool') { canvas.style.cursor = isPanning ? 'grabbing' : 'grab'; return; }
             if (currentTool === 'text') { canvas.style.cursor = 'text'; return; }
             if (currentTool === 'pointer') { canvas.style.cursor = 'default'; return; }
 
             const rect = canvas.getBoundingClientRect();
+
+
+
+
             let scale = 1;
             if (rect.width > 0) scale = rect.width / canvas.width;
 
@@ -612,7 +673,6 @@
         }
 
         window.addEventListener('resize', updateCursor);
-        
         
         function updateSizeFromInput(val) {
             let size = parseInt(val);
@@ -653,13 +713,26 @@
             clearMultiSelection(); 
         }
 
+
+
         function handleCanvasDown(clientX, clientY) {
             lockAllTexts(); 
+
+            
+            if (currentTool === 'newTool') {
+                isPanning = true;
+                panStartX = clientX - panX;
+                panStartY = clientY - panY;
+                updateCursor();
+                return;
+            }
+
+            
             if (currentTool === 'pointer') {
                 isSelecting = true;
                 const rect = wrapper.getBoundingClientRect();
-                selStartX = clientX - rect.left;
-                selStartY = clientY - rect.top;
+                selStartX = (clientX - rect.left) / zoomLevel;
+                selStartY = (clientY - rect.top) / zoomLevel;
 
                 selectionBoxDOM.style.left = selStartX + 'px';
                 selectionBoxDOM.style.top = selStartY + 'px';
@@ -670,9 +743,12 @@
             }
             if (currentTool === 'text') {
                 const rect = wrapper.getBoundingClientRect();
-                createTextObject(clientX - rect.left, clientY - rect.top);
+                createTextObject((clientX - rect.left) / zoomLevel, (clientY - rect.top) / zoomLevel);
                 return;
-            } 
+            }
+
+
+
             if (currentTool === 'brush') {
                 isDrawing = true;
                 const rect = canvas.getBoundingClientRect();
@@ -685,8 +761,19 @@
                 strokes.push(currentStroke);
                 ctx.beginPath();
                 ctx.moveTo(px, py);
+                ctx.lineTo(px, py);
+                ctx.strokeStyle = currentStroke.color;
+                ctx.lineWidth = currentStroke.size;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
             }
+
+
+
         }
+
+
 
         canvas.addEventListener('mousedown', (e) => handleCanvasDown(e.clientX, e.clientY));
         canvas.addEventListener('touchstart', (e) => { 
@@ -699,12 +786,26 @@
         let resizeDir = null;
         let dragStartX, dragStartY, initialLeft, initialTop, initialWidth, initialHeight, initialFontSize;
 
-        function handleGlobalMove(clientX, clientY) {
-            if (isSelecting) {
 
+
+        function handleGlobalMove(clientX, clientY) {
+            if (isPanning && currentTool === 'newTool') {
+                panX = clientX - panStartX;
+                panY = clientY - panStartY;
+                applyPanZoom();
+                return;
+            }
+
+
+
+            if (isSelecting) {
                 const rect = wrapper.getBoundingClientRect();
-                const currentX = clientX - rect.left;
-                const currentY = clientY - rect.top;
+                const currentX = (clientX - rect.left) / zoomLevel;
+                const currentY = (clientY - rect.top) / zoomLevel;
+
+
+
+
                 const left = Math.min(selStartX, currentX);
                 const top = Math.min(selStartY, currentY);
                 selectionBoxDOM.style.left = left + 'px';
@@ -712,9 +813,14 @@
                 selectionBoxDOM.style.width = Math.abs(currentX - selStartX) + 'px';
                 selectionBoxDOM.style.height = Math.abs(currentY - selStartY) + 'px';
             }
+
+
+
             else if (dragNode) {
-                const dx = clientX - dragStartX;
-                const dy = clientY - dragStartY;
+                const dx = (clientX - dragStartX) / zoomLevel;
+                const dy = (clientY - dragStartY) / zoomLevel;
+
+
 
                 if (selectedNodes.size > 0 && selectedNodes.has(dragNode)) {
                     groupDragData.forEach(item => {
@@ -726,9 +832,15 @@
                     dragNode.style.top = (initialTop + dy) + 'px';
                 }
             } 
+
+
+
             else if (resizeNode) {
-                const dx = clientX - dragStartX;
-                const dy = clientY - dragStartY;
+                const dx = (clientX - dragStartX) / zoomLevel;
+                const dy = (clientY - dragStartY) / zoomLevel;
+
+
+
                 let newWidth = initialWidth, newHeight = initialHeight, diffX = 0, diffY = 0, scale = 1;
                 const isCorner = ['nw', 'ne', 'sw', 'se'].includes(resizeDir);
 
@@ -759,8 +871,6 @@
                 resizeNode.style.height = newHeight === 'auto' ? 'auto' : newHeight + 'px';
 
             }
-
-
             else if (isDrawing && currentTool === 'brush') {
                 const rect = canvas.getBoundingClientRect();
                 const scaleX = canvas.width / rect.width;   
@@ -783,10 +893,20 @@
             handleGlobalMove(e.touches[0].clientX, e.touches[0].clientY);
         }, { passive: false });
 
+
+
+
         function handleGlobalUp() {
+            if (isPanning) {
+                isPanning = false;
+                updateCursor();
+            }
             if (isSelecting) {
                 isSelecting = false;
                 selectionBoxDOM.style.display = 'none';
+
+
+
 
                 const selRect = {
                     left: parseFloat(selectionBoxDOM.style.left),
@@ -821,11 +941,66 @@
             if (isDrawing) { isDrawing = false; queueSaveState(); }
         }
 
+
+
         window.addEventListener('mouseup', handleGlobalUp);
         window.addEventListener('mouseleave', handleGlobalUp); 
         window.addEventListener('touchend', handleGlobalUp);
 
+
+
+
+
+
+        wrapper.parentElement.addEventListener('wheel', (e) => {
+            if (currentTool !== 'newTool') return;
+            e.preventDefault(); 
+
+            const oldZoom = zoomLevel;
+            const zoomStep = 0.1; 
+            
+            if (e.deltaY < 0) {
+                zoomLevel += zoomStep; 
+            } else {
+                zoomLevel -= zoomStep; 
+            }
+            zoomLevel = Math.max(0.5, Math.min(zoomLevel, 5)); 
+
+            if (oldZoom === zoomLevel) return; 
+
+            
+            const rect = wrapper.getBoundingClientRect();
+            
+            
+            const visualCenterX = rect.left + rect.width / 2;
+            const visualCenterY = rect.top + rect.height / 2;
+
+            
+            const mouseXFromCenter = e.clientX - visualCenterX;
+            const mouseYFromCenter = e.clientY - visualCenterY;
+
+            
+            const zoomRatio = zoomLevel / oldZoom;
+
+            
+            panX -= mouseXFromCenter * (zoomRatio - 1);
+            panY -= mouseYFromCenter * (zoomRatio - 1);
+
+            applyPanZoom();
+        }, { passive: false });
+
+
+
+
+
+
+
+
         function createTextObject(x, y, restoreData = null) {
+
+
+
+
             const node = document.createElement('div');
             node.className = 'text-element editing';
             
@@ -926,7 +1101,6 @@
                 
                 const startFontSize = parseInt(brushSize.value) * 4;
                 
-                
                 node.style.width = Math.max(100, startFontSize * 2) + 'px';
                 node.style.height = 'auto';
 
@@ -996,7 +1170,6 @@
                 
                 colorPicker.value = rgbToHex(span.style.color);
                 fontSelector.value = span.dataset.fontValue;
-                
                 
                 brushSize.value = Math.round(parseFloat(span.style.fontSize) / 4);
                 brushSizeNumber.value = brushSize.value;
@@ -1122,14 +1295,23 @@
             if (originalImage) expCtx.drawImage(originalImage, 0, 0);
             else { expCtx.fillStyle = "#ffffff"; expCtx.fillRect(0, 0, expWidth, expHeight); }
 
+
+
+
+
             strokes.forEach(stroke => {
                 if (stroke.points.length < 1) return;
                 expCtx.beginPath();
                 expCtx.moveTo(stroke.points[0].x * imgScaleRatio, stroke.points[0].y * imgScaleRatio);
+                expCtx.lineTo(stroke.points[0].x * imgScaleRatio, stroke.points[0].y * imgScaleRatio);
                 for (let i = 1; i < stroke.points.length; i++) expCtx.lineTo(stroke.points[i].x * imgScaleRatio, stroke.points[i].y * imgScaleRatio);
                 expCtx.strokeStyle = stroke.color; expCtx.lineWidth = stroke.size * imgScaleRatio; 
                 expCtx.lineCap = 'round'; expCtx.lineJoin = 'round'; expCtx.stroke();
             });
+
+
+
+
 
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
@@ -1162,8 +1344,6 @@
                 const hasStroke = span.dataset.hasStroke === 'true';
                 const strokeColor = span.dataset.strokeColor || '#ffffff';
 
-
-
                 const lineHeight = canvasFontSize * 1.2; 
                 let wrappedLines = [];
                 
@@ -1175,18 +1355,13 @@
                         let word = words[i];
                         let testLine = currentLine + word + ' ';
 
-                        
                         if (expCtx.measureText(testLine).width > canvasMaxWidth) {
-                            
-                            
                             if (expCtx.measureText(word).width > canvasMaxWidth) {
-                                
                                 if (currentLine.trim() !== '') {
                                     wrappedLines.push(currentLine.trim());
                                     currentLine = '';
                                 }
-                                
-                                                                let tempWord = '';
+                                let tempWord = '';
                                 for (let j = 0; j < word.length; j++) {
                                     let testChar = tempWord + word[j];
                                     if (expCtx.measureText(testChar).width > canvasMaxWidth && tempWord !== '') {
@@ -1197,16 +1372,13 @@
                                     }
                                 }
                                 currentLine = tempWord + ' ';
-                            } 
-                            
-                            else {
+                            } else {
                                 if (currentLine.trim() !== '') {
                                     wrappedLines.push(currentLine.trim());
                                 }
                                 currentLine = word + ' ';
                             }
                         } else {
-                           
                             currentLine = testLine;
                         }
                     }
@@ -1214,8 +1386,6 @@
                         wrappedLines.push(currentLine.trim());
                     }
                 });
-
-
 
                 let currentY = canvasY - ((wrappedLines.length * lineHeight) / 2) + (lineHeight / 2) + (canvasFontSize * 0.08);
                 
