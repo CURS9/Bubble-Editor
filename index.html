@@ -143,9 +143,6 @@
         #clearBtn:hover { background-color: #2e0f0f; color: #fff; border-color: #e74c3c; box-shadow: 0 0 10px rgba(231, 76, 60, 0.3); }
         #downloadBtn:hover { background-color: #0f2e16; color: #fff; border-color: #27ae60; box-shadow: 0 0 10px rgba(39, 174, 96, 0.3); }
 
-
-
-
         .canvas-container {
             width: 100%;
             max-width: 1100px;
@@ -154,10 +151,6 @@
             overflow: hidden; 
             padding: 10px;
         }
-        
-
-
-
 
         .canvas-wrapper {
             position: relative;
@@ -259,6 +252,32 @@
         .canvas-wrapper.brush-mode .text-element {
             pointer-events: none !important;
         }
+
+        
+        .rotate-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: #00d2ff;
+            border-radius: 50%;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            cursor: grab;
+            z-index: 10;
+            display: none;
+        }
+        .rotate-handle::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 18px;
+            background-color: #00d2ff;
+            top: 12px;
+            left: 5px;
+        }
+        .text-element.editing .rotate-handle { display: block; }
+        .text-element.multi-selected .rotate-handle { display: none; }
         
     </style>
 </head>
@@ -278,33 +297,21 @@
                     <span style="font-family: 'Times New Roman', Georgia, serif; font-size: 24px; font-weight: bold; font-style: italic; line-height: 1;">T</span>
                 </button>
 
-
-
-
-
-
-         <button id="newToolBtn" class="tool-btn" title="Pan & Zoom">
-    <svg width="28" height="28" viewBox="-3 -1 30 26" style="overflow: visible;" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-        <g transform="translate(-5.5, 0.5) scale(0.55)" stroke-width="3.5">
-            <path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"></path>
-            <path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2"></path>
-            <path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"></path>
-            <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path>
-        </g>
-        <line x1="16.5" y1="1" x2="7.5" y2="23" stroke-width="1.5"></line>
-        <g transform="translate(15.5, 7.5) scale(0.55)" stroke-width="3.5">
-            <circle cx="13" cy="11" r="8"></circle>
-            <line x1="7.34" y1="16.66" x2="3" y2="21"></line>
-        </g>
-    </svg>
-</button>
-
-
-
-
-
-
-
+                <button id="newToolBtn" class="tool-btn" title="Pan & Zoom">
+                    <svg width="28" height="28" viewBox="-3 -1 30 26" style="overflow: visible;" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <g transform="translate(-5.5, 0.5) scale(0.55)" stroke-width="3.5">
+                            <path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"></path>
+                            <path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2"></path>
+                            <path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"></path>
+                            <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path>
+                        </g>
+                        <line x1="16.5" y1="1" x2="7.5" y2="23" stroke-width="1.5"></line>
+                        <g transform="translate(15.5, 7.5) scale(0.55)" stroke-width="3.5">
+                            <circle cx="13" cy="11" r="8"></circle>
+                            <line x1="7.34" y1="16.66" x2="3" y2="21"></line>
+                        </g>
+                    </svg>
+                </button>
             </div>
         </div>
 
@@ -402,9 +409,6 @@
         let strokes = [];         
         let currentStroke = null; 
 
-
-
-
         let undoStack = [];
         let isUndoing = false;
         let saveTimeout;
@@ -417,14 +421,16 @@
         let panStartX = 0;
         let panStartY = 0;
 
+        
+        let rotateNode = null;
+        let elementCenterX = 0;
+        let elementCenterY = 0;
+
         function applyPanZoom() {
             wrapper.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
         }
 
         function queueSaveState() {
-
-
-
             if (isUndoing) return;
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(saveState, 50); 
@@ -440,6 +446,7 @@
                     top: node.style.top,
                     width: node.style.width,
                     height: node.style.height,
+                    rotation: parseFloat(node.dataset.rotation) || 0,
                     html: span.innerHTML, 
                     text: span.innerText, 
                     color: span.style.color,
@@ -490,16 +497,10 @@
             groupDragData = [];
         }
 
-
-
-
-
-
-let isSpacePressed = false;
+        let isSpacePressed = false;
 
         window.addEventListener('keydown', (e) => {
             const isTyping = document.activeElement.isContentEditable || document.activeElement.tagName === 'INPUT';
-            
             
             if (e.code === 'Space' && !isTyping) {
                 e.preventDefault();
@@ -514,12 +515,6 @@ let isSpacePressed = false;
                 updateCursor(); 
             }
         });
-
-
-
-
-
-
 
         window.addEventListener('keydown', (e) => {
             const isTyping = document.activeElement.isContentEditable || document.activeElement.tagName === 'INPUT';
@@ -542,6 +537,7 @@ let isSpacePressed = false;
                         fontValue: span.dataset.fontValue,
                         width: activeEditingNode.style.width || activeEditingNode.offsetWidth + 'px',
                         height: activeEditingNode.style.height || activeEditingNode.offsetHeight + 'px',
+                        rotation: parseFloat(activeEditingNode.dataset.rotation) || 0,
                         hasStroke: span.dataset.hasStroke === 'true',
                         strokeColor: span.dataset.strokeColor || '#ffffff'
                     };
@@ -589,10 +585,6 @@ let isSpacePressed = false;
                 fillWhiteBackground();
             }
 
-
-
-
-
             strokes.forEach(stroke => {
                 if (stroke.points.length < 1) return;
                 ctx.beginPath();
@@ -607,10 +599,6 @@ let isSpacePressed = false;
                 ctx.lineJoin = 'round';
                 ctx.stroke();
             });
-
-
-
-
         }
         
         fillWhiteBackground();
@@ -679,19 +667,12 @@ let isSpacePressed = false;
             }
         }
 
-
-
-
         function updateCursor() {
             if (currentTool === 'newTool') { canvas.style.cursor = isPanning ? 'grabbing' : 'grab'; return; }
             if (currentTool === 'text') { canvas.style.cursor = 'text'; return; }
             if (currentTool === 'pointer') { canvas.style.cursor = 'default'; return; }
 
             const rect = canvas.getBoundingClientRect();
-
-
-
-
             let scale = 1;
             if (rect.width > 0) scale = rect.width / canvas.width;
 
@@ -751,12 +732,9 @@ let isSpacePressed = false;
             clearMultiSelection(); 
         }
 
-
-
         function handleCanvasDown(clientX, clientY) {
             lockAllTexts(); 
 
-            
             if (currentTool === 'newTool' || isSpacePressed) {
                 isPanning = true;
                 panStartX = clientX - panX;
@@ -765,10 +743,6 @@ let isSpacePressed = false;
                 return;
             }
 
-
-
-
-            
             if (currentTool === 'pointer') {
                 isSelecting = true;
                 const rect = wrapper.getBoundingClientRect();
@@ -787,8 +761,6 @@ let isSpacePressed = false;
                 createTextObject((clientX - rect.left) / zoomLevel, (clientY - rect.top) / zoomLevel);
                 return;
             }
-
-
 
             if (currentTool === 'brush') {
                 isDrawing = true;
@@ -809,12 +781,7 @@ let isSpacePressed = false;
                 ctx.lineJoin = 'round';
                 ctx.stroke();
             }
-
-
-
         }
-
-
 
         canvas.addEventListener('mousedown', (e) => handleCanvasDown(e.clientX, e.clientY));
         canvas.addEventListener('touchstart', (e) => { 
@@ -827,8 +794,6 @@ let isSpacePressed = false;
         let resizeDir = null;
         let dragStartX, dragStartY, initialLeft, initialTop, initialWidth, initialHeight, initialFontSize;
 
-
-
         function handleGlobalMove(clientX, clientY) {
             if (isPanning && (currentTool === 'newTool' || isSpacePressed)) {
                 panX = clientX - panStartX;
@@ -837,15 +802,10 @@ let isSpacePressed = false;
                 return;
             }
 
-
-
             if (isSelecting) {
                 const rect = wrapper.getBoundingClientRect();
                 const currentX = (clientX - rect.left) / zoomLevel;
                 const currentY = (clientY - rect.top) / zoomLevel;
-
-
-
 
                 const left = Math.min(selStartX, currentX);
                 const top = Math.min(selStartY, currentY);
@@ -854,14 +814,17 @@ let isSpacePressed = false;
                 selectionBoxDOM.style.width = Math.abs(currentX - selStartX) + 'px';
                 selectionBoxDOM.style.height = Math.abs(currentY - selStartY) + 'px';
             }
-
-
-
+            else if (rotateNode) {
+                let angle = Math.atan2(clientY - elementCenterY, clientX - elementCenterX) * (180 / Math.PI) + 90;
+                if (window.event && window.event.shiftKey) {
+                    angle = Math.round(angle / 15) * 15;
+                }
+                rotateNode.dataset.rotation = angle;
+                rotateNode.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+            }
             else if (dragNode) {
                 const dx = (clientX - dragStartX) / zoomLevel;
                 const dy = (clientY - dragStartY) / zoomLevel;
-
-
 
                 if (selectedNodes.size > 0 && selectedNodes.has(dragNode)) {
                     groupDragData.forEach(item => {
@@ -873,14 +836,16 @@ let isSpacePressed = false;
                     dragNode.style.top = (initialTop + dy) + 'px';
                 }
             } 
-
-
-
             else if (resizeNode) {
-                const dx = (clientX - dragStartX) / zoomLevel;
-                const dy = (clientY - dragStartY) / zoomLevel;
+                const currentRotation = (parseFloat(resizeNode.dataset.rotation) || 0) * (Math.PI / 180);
+                const cosAngle = Math.cos(-currentRotation);
+                const sinAngle = Math.sin(-currentRotation);
 
+                const rawDx = (clientX - dragStartX) / zoomLevel;
+                const rawDy = (clientY - dragStartY) / zoomLevel;
 
+                const dx = rawDx * cosAngle - rawDy * sinAngle;
+                const dy = rawDx * sinAngle + rawDy * cosAngle;
 
                 let newWidth = initialWidth, newHeight = initialHeight, diffX = 0, diffY = 0, scale = 1;
                 const isCorner = ['nw', 'ne', 'sw', 'se'].includes(resizeDir);
@@ -905,9 +870,12 @@ let isSpacePressed = false;
                     newHeight = 'auto'; 
                 }
 
+                const screenDiffX = diffX * Math.cos(currentRotation) - diffY * Math.sin(currentRotation);
+                const screenDiffY = diffX * Math.sin(currentRotation) + diffY * Math.cos(currentRotation);
+
                 resizeNode.style.width = newWidth + 'px';
-                resizeNode.style.left = (initialLeft + diffX / 2) + 'px';
-                resizeNode.style.top = (initialTop + diffY / 2) + 'px';
+                resizeNode.style.left = (initialLeft + screenDiffX / 2) + 'px';
+                resizeNode.style.top = (initialTop + screenDiffY / 2) + 'px';
                 
                 resizeNode.style.height = newHeight === 'auto' ? 'auto' : newHeight + 'px';
 
@@ -930,12 +898,9 @@ let isSpacePressed = false;
 
         window.addEventListener('mousemove', (e) => handleGlobalMove(e.clientX, e.clientY));
         window.addEventListener('touchmove', (e) => {
-            if (isSelecting || dragNode || resizeNode || isDrawing) e.preventDefault(); 
+            if (isSelecting || dragNode || resizeNode || rotateNode || isDrawing) e.preventDefault(); 
             handleGlobalMove(e.touches[0].clientX, e.touches[0].clientY);
         }, { passive: false });
-
-
-
 
         function handleGlobalUp() {
             if (isPanning) {
@@ -945,9 +910,6 @@ let isSpacePressed = false;
             if (isSelecting) {
                 isSelecting = false;
                 selectionBoxDOM.style.display = 'none';
-
-
-
 
                 const selRect = {
                     left: parseFloat(selectionBoxDOM.style.left),
@@ -971,9 +933,10 @@ let isSpacePressed = false;
                 }
             }
 
-            if (dragNode || resizeNode) {
+            if (dragNode || resizeNode || rotateNode) {
                 dragNode = null;
                 resizeNode = null;
+                rotateNode = null;
                 resizeDir = null;
                 groupDragData = []; 
                 queueSaveState(); 
@@ -982,16 +945,9 @@ let isSpacePressed = false;
             if (isDrawing) { isDrawing = false; queueSaveState(); }
         }
 
-
-
         window.addEventListener('mouseup', handleGlobalUp);
         window.addEventListener('mouseleave', handleGlobalUp); 
         window.addEventListener('touchend', handleGlobalUp);
-
-
-
-
-
 
         wrapper.parentElement.addEventListener('wheel', (e) => {
             e.preventDefault(); 
@@ -1031,20 +987,10 @@ let isSpacePressed = false;
             applyPanZoom();
         }, { passive: false });
 
-
-
-
-
-
-
-
         function createTextObject(x, y, restoreData = null) {
-
-
-
-
             const node = document.createElement('div');
             node.className = 'text-element editing';
+            node.dataset.rotation = 0;
             
             const span = document.createElement('span');
             span.contentEditable = "false";
@@ -1063,6 +1009,24 @@ let isSpacePressed = false;
                     selection.collapseToEnd();
                 }
             });
+
+            const rotateHandle = document.createElement('div');
+            rotateHandle.className = 'rotate-handle';
+            node.appendChild(rotateHandle);
+
+            function initRotate(clientX, clientY, e) {
+                switchTool('pointer');
+                clearMultiSelection();
+                rotateNode = node;
+                const rect = node.getBoundingClientRect();
+                elementCenterX = rect.left + rect.width / 2;
+                elementCenterY = rect.top + rect.height / 2;
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            rotateHandle.addEventListener('mousedown', (e) => initRotate(e.clientX, e.clientY, e));
+            rotateHandle.addEventListener('touchstart', (e) => initRotate(e.touches[0].clientX, e.touches[0].clientY, e), {passive:false});
 
             const handles = ['nw', 'ne', 'sw', 'se', 'e', 'w'];
             handles.forEach(dir => {
@@ -1101,6 +1065,9 @@ let isSpacePressed = false;
                 if (restoreData.width) node.style.width = restoreData.width;
                 if (restoreData.height) node.style.height = restoreData.height;
                 
+                node.dataset.rotation = restoreData.rotation || 0;
+                node.style.transform = `translate(-50%, -50%) rotate(${node.dataset.rotation}deg)`;
+
                 if (restoreData.html) {
                     span.innerHTML = restoreData.html;
                 } else {
@@ -1140,6 +1107,7 @@ let isSpacePressed = false;
             else {
                 node.style.left = x + 'px';
                 node.style.top = y + 'px';
+                node.style.transform = `translate(-50%, -50%) rotate(0deg)`;
                 
                 const startFontSize = parseInt(brushSize.value) * 4;
                 
@@ -1189,7 +1157,7 @@ let isSpacePressed = false;
             };
 
             function initNodeDrag(clientX, clientY, e) {
-                if (e.target.closest('.resize-handle')) return;
+                if (e.target.closest('.resize-handle') || e.target.closest('.rotate-handle')) return;
                 switchTool('pointer');
 
                 if (selectedNodes.has(node)) {
@@ -1235,7 +1203,7 @@ let isSpacePressed = false;
             node.addEventListener('touchstart', (e) => initNodeDrag(e.touches[0].clientX, e.touches[0].clientY, e), {passive:false});
 
             node.addEventListener('dblclick', (e) => {
-                if (e.target.closest('.resize-handle')) return;
+                if (e.target.closest('.resize-handle') || e.target.closest('.rotate-handle')) return;
                 clearMultiSelection(); 
                 switchTool('pointer');
                 node.classList.remove('locked');
@@ -1337,10 +1305,6 @@ let isSpacePressed = false;
             if (originalImage) expCtx.drawImage(originalImage, 0, 0);
             else { expCtx.fillStyle = "#ffffff"; expCtx.fillRect(0, 0, expWidth, expHeight); }
 
-
-
-
-
             strokes.forEach(stroke => {
                 if (stroke.points.length < 1) return;
                 expCtx.beginPath();
@@ -1351,15 +1315,12 @@ let isSpacePressed = false;
                 expCtx.lineCap = 'round'; expCtx.lineJoin = 'round'; expCtx.stroke();
             });
 
-
-
-
-
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
 
             document.querySelectorAll('.text-element').forEach(node => {
                 const span = node.querySelector('span');
+                const rotation = parseFloat(node.dataset.rotation) || 0;
                 
                 let rawHtml = span.innerHTML;
                 rawHtml = rawHtml.replace(/<br\s*[\/]?>/gi, '\n')
@@ -1380,6 +1341,10 @@ let isSpacePressed = false;
                 const canvasMaxWidth = Math.max(10, ((parseFloat(node.style.width) || node.offsetWidth) - 20)) * scaleX * imgScaleRatio;
                 const canvasFontSize = parseFloat(span.style.fontSize) * scaleX * imgScaleRatio;
                 
+                expCtx.save();
+                expCtx.translate(canvasX, canvasY);
+                expCtx.rotate(rotation * Math.PI / 180);
+
                 expCtx.font = `${span.style.fontWeight || 'normal'} ${canvasFontSize}px ${span.style.fontFamily}`;
                 expCtx.fillStyle = span.style.color; expCtx.textAlign = 'center'; expCtx.textBaseline = 'middle'; 
 
@@ -1429,18 +1394,20 @@ let isSpacePressed = false;
                     }
                 });
 
-                let currentY = canvasY - ((wrappedLines.length * lineHeight) / 2) + (lineHeight / 2) + (canvasFontSize * 0.08);
+                let currentY = -((wrappedLines.length * lineHeight) / 2) + (lineHeight / 2) + (canvasFontSize * 0.08);
                 
                 wrappedLines.forEach(line => { 
                     if (hasStroke) {
                         expCtx.strokeStyle = strokeColor;
                         expCtx.lineWidth = canvasFontSize * 0.08; 
                         expCtx.lineJoin = 'round';
-                        expCtx.strokeText(line, canvasX, currentY);
+                        expCtx.strokeText(line, 0, currentY);
                     }
-                    expCtx.fillText(line, canvasX, currentY); 
+                    expCtx.fillText(line, 0, currentY); 
                     currentY += lineHeight; 
                 });
+
+                expCtx.restore();
             });
 
             const link = document.createElement('a');
